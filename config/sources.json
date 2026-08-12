@@ -1,0 +1,4 @@
+{
+  "_comment": "Explicit month -> URL fallback for discovery. Scraping is the primary path; entries here fill gaps and act as a tripwire when a published URL changes. Keys are YYYY-MM of the reporting month.",
+  "publications": {}
+}
