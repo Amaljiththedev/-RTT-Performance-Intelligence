@@ -1,0 +1,81 @@
+name: RTT CI/CD Pipeline
+
+on:
+  push:
+    branches: [ main, discover ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Monthly cron schedule: NHS England releases RTT data on the 2nd Thursday of the month.
+    # This runs at 09:00 AM UTC on the 10th-16th to detect new monthly releases.
+    - cron: '0 9 10-16 * *'
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      db:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_DB: rtt_db
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Initialize Database Schemas
+        env:
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_NAME: rtt_db
+          DB_USER: postgres
+          DB_PASSWORD: postgres
+        run: |
+          python -c "
+          import os, psycopg2
+          conn = psycopg2.connect(
+              host=os.getenv('DB_HOST'),
+              port=os.getenv('DB_PORT'),
+              dbname=os.getenv('DB_NAME'),
+              user=os.getenv('DB_USER'),
+              password=os.getenv('DB_PASSWORD')
+          )
+          with conn.cursor() as cur:
+              with open('sql/00_init.sql', 'r') as f:
+                  cur.execute(f.read())
+          conn.commit()
+          conn.close()
+          print('Schemas created successfully!')
+          "
+
+      - name: Run Tests
+        env:
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_NAME: rtt_db
+          DB_USER: postgres
+          DB_PASSWORD: postgres
+        run: |
+          pytest tests/
