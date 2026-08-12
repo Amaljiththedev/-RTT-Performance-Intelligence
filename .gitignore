@@ -1,0 +1,29 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Environment / Secret keys
+.env
+.env.local
+
+# Databases and Local Volumes
+postgres_data/
+
+# Data cache (raw downloaded files)
+data/
+data/raw/
+
+# OS/System files
+.DS_Store
+Thumbs.db
