@@ -183,6 +183,13 @@ SELECT
     (wait_band_lower >= 18)         AS breaches_18_weeks,
     (wait_band_lower >= 52)         AS breaches_52_weeks,
     (rtt_part_type = 'Part_2A')     AS is_subset_of_total,
+
+    -- C_999 "Total" is a pre-aggregated row across every specialty, not a specialty
+    -- of its own. Including it counts the entire waiting list twice. X02-X06
+    -- ("Other - Medical Services" and similar) ARE genuine categories, so this
+    -- cannot be handled by pattern-matching odd-looking codes.
+    (treatment_function_code = 'C_999') AS is_specialty_total,
+
     SUM(pathway_count)              AS pathway_count,
     COUNT(*) FILTER (WHERE is_non_numeric) AS non_numeric_source_values
 FROM typed
